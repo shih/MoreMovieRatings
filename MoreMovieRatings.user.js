@@ -16,6 +16,7 @@
 // @connect      www.omdbapi.com
 // @connect      letterboxd.com
 // ==/UserScript==
+
 'use strict';
 
 function getURL_GM(url, headers, data) {
@@ -143,10 +144,7 @@ async function getLetterboxdInfo(imdbId) {
             // Primary: JSON-LD aggregateRating
             for (const script of doc.querySelectorAll('script[type="application/ld+json"]')) {
                 try {
-                    let text = script.textContent;
-                    text = text.replace(/\/\* <\!\[CDATA\[ \*\//g, '').replace(/\/\* \]\]> \*\//g, '');
-                    text = text.replace(/[\r\n]+/g, '');
-                    const data = JSON.parse(text);
+                    const data = JSON.parse(script.textContent);
                     if (data?.aggregateRating) {
                         rating = data.aggregateRating.ratingValue
                             ? parseFloat(data.aggregateRating.ratingValue).toFixed(2)
@@ -166,7 +164,7 @@ async function getLetterboxdInfo(imdbId) {
                 }
             }
 
-            resolve(rating ? { url: filmUrl, rating, numRaters } : null);
+            resolve({ url: filmUrl, rating, numRaters });
         },
         onerror: () => resolve(null),
     }));
@@ -200,7 +198,7 @@ function insertDoubanRatingDiv(parent, title, rating, link, num_raters, histogra
     parent.insertAdjacentHTML('beforeend',
         `<div class="rating_logo">${title}</div>
         <div class="rating_self clearfix">
-            <strong class="ll rating_num">${rating}</strong>
+            <strong class="ll rating_num" style="${typeof rating === 'string' && isNaN(rating) ? 'font-size:16px' : ''}">${rating}</strong>
             <div class="rating_right">
                 <div class="ll bigstar${star}"></div>
                 <div style="clear: both" class="rating_sum"><a href=${link} target=_blank>${num_raters.toString().replace(/,/g, '')}人评价</a></div>
@@ -357,7 +355,7 @@ function linkifyIMDbNode(text_node, url_base) {
 
         // Letterboxd — LB is 0–5, multiply by 2 for Douban's 0–10 star display
         if (lb_data) {
-            const lb_rating_10 = (parseFloat(lb_data.rating) * 2).toFixed(1);
+            const lb_rating_10 = lb_data.rating ? (parseFloat(lb_data.rating) * 2).toFixed(1) : 'No ratings';
             const lb_voters = lb_data.numRaters
                 ? new Intl.NumberFormat('en-US').format(lb_data.numRaters)
                 : '?';
@@ -474,7 +472,7 @@ function linkifyIMDbNode(text_node, url_base) {
             lb_rating.children[1].target = '_blank';
             lb_rating.children[1].title = 'Letterboxd';
             const lb_rating_div = lb_rating.querySelector('div[data-testid="hero-rating-bar__aggregate-rating__score"]');
-            lb_rating_div.firstElementChild.textContent = (parseFloat(lb_data.rating) * 2).toFixed(1);
+            lb_rating_div.firstElementChild.textContent = lb_data.rating || 'No ratings';
             lb_rating_div.nextElementSibling.nextElementSibling.textContent = lb_data.numRaters
                 ? new Intl.NumberFormat("en-US", { notation: 'compact' }).format(lb_data.numRaters)
                 : '';
