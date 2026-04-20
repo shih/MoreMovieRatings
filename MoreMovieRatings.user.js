@@ -222,21 +222,14 @@ function insertLetterboxdRating(ratings, title, title_href, rating, link, num_ra
     title_element.textContent = title;
     title_element.href = title_href;
     title_element.target = '_blank';
-    let average_element = new_rating.querySelector('a.display-rating');
-    if (!average_element) {
-        const average_span = document.createElement('span');
-        average_span.classList.add('average-rating');
-        average_element = document.createElement('a');
-        average_element.classList.add('tooltip');
-        average_element.classList.add('display-rating');
-        average_span.append(average_element);
-        new_rating.querySelector('.rating-histogram').before(average_span);
-    }
     const average_rating = rating / 2;
-    average_element.textContent = average_rating.toFixed(1);
-    average_element.href = link;
-    average_element.target = '_blank';
-    average_element.title = `Weighted average of ${average_rating.toFixed(2)} based on ${new Intl.NumberFormat("en-US").format(num_raters)} ratings`;
+    let average_element = new_rating.querySelector('a.averagerating');
+    if (average_element) {
+        average_element.textContent = average_rating.toFixed(1);
+        average_element.href = link;
+        average_element.target = '_blank';
+        average_element.dataset.originalTitle = `Weighted average of ${average_rating.toFixed(2)} based on ${new Intl.NumberFormat("en-US").format(num_raters)} ratings`;
+    }
     if (histogram) {
         const histogram_elements = new_rating.querySelectorAll('li i');
         const max = Math.max(...Object.values(histogram));
